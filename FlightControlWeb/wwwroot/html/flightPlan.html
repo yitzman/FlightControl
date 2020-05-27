@@ -1,0 +1,487 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+        <title>Flight Command Staition</title>
+
+            <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB8mIx1E8axZNoPxj-ScngF_VIdGbGWzis&callback=initMap"></script>
+    <style type="text/css">
+
+        #map {
+            height: 500px;
+            width: 100%;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        ol {
+            padding-left: 20px
+        }
+
+        .clickedClass {
+            color: red;
+        }
+    </style>
+</head>
+<body onload="startTime()">
+    <div><button id="fetch flights">Fetch Flights</button></div>
+    <div><button id="fetch flight plan">Fetch Plan</button></div>
+    <div><button id="delete flight">Delete Flight</button></div>
+    <script type="text/javascript">
+
+        //get time
+        function startTime() {
+            var today = new Date();
+            var h = today.getHours();
+            var m = today.getMinutes();
+            var s = today.getSeconds();
+            m = checkTime(m);
+            s = checkTime(s);
+            document.getElementById('time').innerHTML =
+                h + ":" + m + ":" + s;
+            var t = setTimeout(startTime, 500);
+        }
+        function checkTime(i) {
+            if (i < 10) { i = "0" + i };  // add zero in front of numbers < 10
+            return i;
+        }
+        //2020 - 12 - 26T23: 56: 21Z
+        function getTime() {
+            var now = new Date();
+            var year = now.getFullYear();
+            var month = checkTime(now.getMonth());
+            var day = checkTime(now.getDate());
+            var hour = checkTime(now.getHours());
+            var minute = checkTime(now.getMinutes());
+            var second = checkTime(now.getSeconds());
+            return year + '-' + month + '-' + day + 'T' + hour + ':' + minute + ':' + second + 'Z';
+        }
+        //array of flights
+        /*var flightDetails = [
+            {
+                "flight_id": "F1",
+                "initial_location": { "longitude": 33.244, "latitude": 31.12, "date_time": "2020-12-26T23:56:21Z" },
+                "passengers": 250,
+                "company_name": "AirCanada",
+                "segments": [{ "longitude": 33.234, "latitude": 31.18, "timespan_seconds": 650 }, { "longitude": 33.224, "latitude": 31.24, "timespan_seconds": 650 }],
+                "is_external": false
+            },
+            {
+                "flight_id": "F2",
+                "initial_location": { "longitude": 35.005, "latitude": 35, "date_time": "2020-12-26T23:56:21Z" },
+                "passengers": 250,
+                "company_name": "ELAL",
+                "date_time": "2020-12-26T23:56:21Z",
+                "segments": [{ "longitude": 35.015, "latitude": 35.06, "timespan_seconds": 650 }, { "longitude": 35.025, "latitude": 35.12, "timespan_seconds": 650 }],
+                "is_external": false
+            },
+            {
+                "flight_id": "F3",
+                "initial_location": { "longitude": 36.907, "latitude": 37.88, "date_time": "2020-12-26T23:56:21Z" },
+                "passengers": 250,
+                "company_name": "Delta",
+                "segments": [{ "longitude": 36.917, "latitude": 37.94, "timespan_seconds": 650 }, { "longitude": 36.927, "latitude": 38, "timespan_seconds": 650 }],
+                "date_time": "2020-12-26T23:56:21Z",
+                "is_external": true
+            },
+            {
+                "flight_id": "F4",
+                "initial_location": { "longitude": 36.907, "latitude": 35, "date_time": "2020-12-26T23:56:21Z" },
+                "passengers": 250,
+                "company_name": "SwissAir",
+                "segments": [{ "longitude": 36.917, "latitude": 35.06, "timespan_seconds": 650 }, { "longitude": 36.927, "latitude": 35.12, "timespan_seconds": 650 }],
+                "date_time": "2020-12-26T23:56:21Z",
+                "is_external": false
+            },
+            {
+                "flight_id": "F5",
+                "initial_location": { "longitude": 37.769, "latitude": 40.74, "date_time": "2020-12-26T23:56:21Z" },
+                "passengers": 250,
+                "company_name": "Luftansa",
+                "segments": [{ "longitude": 37.779, "latitude": 40.8, "timespan_seconds": 650 }, { "longitude": 37.789, "latitude": 40.86, "timespan_seconds": 650 }],
+                "date_time": "2020-12-26T23:56:21Z",
+                "is_external": true
+            },
+        ];
+
+
+        /*add an Airplane to the map
+         function addPlane(location,map) {
+              var plane = new google.maps.Marker({
+                 position: location,
+                 map: map,
+                 icon: {
+                     url: "plane.png",
+                     scaledSize: new google.maps.Size(20, 20),
+                 }
+             });
+
+             google.maps.event.addListener(plane, "click", function() {
+                 $('#myFlights li:nth-child(1)').css('color','red');
+                 map.panTo(this.getPosition());
+                 map.setZoom(10);
+             });
+            //planes.push(plane);
+         }*/
+        //Array of Airplanes
+        myPlanes = [], exPlanes = [] ,flightDetails = [];
+        //map definitions
+        function initMap() {
+            var location = { lat: 32.0055, lng: 34.8854 };
+            var map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 4,
+                center: location
+            });
+            //flight path line
+            var flightPath = new google.maps.Polyline({
+                geodesic: true,
+                strokeColor: '#FF0000',
+                strokeOpacity: 1.0,
+                strokeWeight: 2,
+                map: map
+            });
+            //if user clicks empty space
+            map.addListener('click', function () {
+                //change all other planes back to original color
+                for (var j = 0; j < myPlanes.length; j++) {
+                    myPlanes[j].setIcon({
+                        url: 'http://www.clker.com/cliparts/0/b/2/A/H/W/airplane1-th.png',
+                        scaledSize: new google.maps.Size(20, 20)
+                    });
+                }
+                for (var j = 0; j < exPlanes.length; j++) {
+                    exPlanes[j].setIcon({
+                        url: 'http://www.clker.com/cliparts/A/d/N/8/j/g/blue-airplane-pass-th.png',
+                        scaledSize: new google.maps.Size(20, 20)
+                    });
+                }
+                //dehighlight all highlighted flight buttons
+                $('#myFlights li:nth-child(n) button').removeClass('clickedClass');
+                $('#externalFlights li:nth-child(n) button').removeClass('clickedClass');
+                $('#flightDetails').hide();
+                flightPath.setMap(null);
+            });
+
+            getFlights(map, flightPath);
+        }
+        async function getFlights(map, flightPath) {
+            let currentTime = getTime();
+     
+            let time = "2020-04-27T01:29:21Z";
+            console.log(time);
+            console.log(currentTime);
+            let getOptions = {
+                "method": "GET",
+                "headers": {
+                    'Content-Type': 'application/json'
+                    // 'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            }
+            let flights_array = await fetch("/api/Flights?relative_to=" + time, getOptions);
+            let flights = await flights_array.json();
+            console.log(flights);
+            console.log(flights[0].company_name)
+            for (i = 0; i < flights.length; i++) {
+                var newFlight = new Object();
+                newFlight.company_name = flights[i].company_name;
+                newFlight.flight_id = flights[i].flight_id;
+                newFlight.passengers = flights[i].passengers;
+                newFlight.is_external = flights[i].is_external;
+                newFlight.date_time = flights[i].date_time;
+                newFlight.longitude = flights[i].longitude;
+                newFlight.latitude = flights[i].latitude;
+                flightDetails.push(newFlight);
+            }
+            console.log(flightDetails[0].company_name);
+            console.log(flightDetails[1].flight_id);
+
+            fetchAndDisplay(map, flightPath);
+            //console.log(flightDetails[1].company_name);
+
+        }
+
+
+
+        //call server and display info
+        async function fetchAndDisplay(map, flightPath) {
+            //call server:
+            
+
+
+            //display:
+            //index of planes
+            exI = 1, myI = 1;
+            for (i = 0; i < flightDetails.length; i++) {
+                // check if external and add flight button to flight lists
+                if (flightDetails[i].is_external) {
+                    $('#externalFlights').append('<li><button id=name type="button" class="btn btn-primary">' + flightDetails[i].flight_id + ': ' + flightDetails[i].company_name +
+                        '</button> <button id=delete type="button" class="btn btn-danger"><i>X</i></button></li>');
+                    flightDetails[i].list_num = exI;
+                    exI++;
+                    listName = '#externalFlights';
+                    url = 'http://www.clker.com/cliparts/A/d/N/8/j/g/blue-airplane-pass-th.png';
+                }
+                else {
+                    $('#myFlights').append('<li><button id = name type="button" class="btn btn-success">' + flightDetails[i].flight_id + ': ' + flightDetails[i].company_name +
+                        '</button> <button id=delete type="button" class="btn btn-danger"><i>X</i></button></li>');
+                    flightDetails[i].list_num = myI;
+                    myI++;
+                    listName = '#myFlights';
+
+                    url = 'http://www.clker.com/cliparts/0/b/2/A/H/W/airplane1-th.png';
+                }
+                //add plane to map
+                plane = new google.maps.Marker({
+                    position: new google.maps.LatLng(flightDetails[i].latitude, flightDetails[i].longitude),
+                    map: map,
+                    icon: {
+                        url: url,
+                        scaledSize: new google.maps.Size(20, 20)
+                    }
+                });
+                //click function for planes
+                plane.addListener('click', function (i) {
+                    return function () {
+                        //change all other planes back to original color
+                        for (var j = 0; j < myPlanes.length; j++) {
+                            myPlanes[j].setIcon({
+                                url: 'http://www.clker.com/cliparts/0/b/2/A/H/W/airplane1-th.png',
+                                scaledSize: new google.maps.Size(20, 20)
+                            });
+                        }
+                        for (var j = 0; j < exPlanes.length; j++) {
+                            exPlanes[j].setIcon({
+                                url: 'http://www.clker.com/cliparts/A/d/N/8/j/g/blue-airplane-pass-th.png',
+                                scaledSize: new google.maps.Size(20, 20)
+                            });
+                        }
+                        //change clicked plane to red
+                        this.setIcon({
+                            //url : 'redplane.png',
+                            url: 'http://www.clker.com/cliparts/0/z/w/v/f/d/red-airplane-th.png',
+                            scaledSize: new google.maps.Size(20, 20)
+                        });
+                        /*show flight path
+                        flightPath.setMap(map);
+                        var flightCoordinates = [];
+                        flightCoordinates.push({ lat: flightDetails[i].initial_location.latitude, lng: flightDetails[i].initial_location.longitude });
+                        for (j = 0; j < flightDetails[i].segments.length; j++)
+                            flightCoordinates.push({ lat: flightDetails[i].segments[j].latitude, lng: flightDetails[i].segments[j].longitude });
+                        flightPath.setPath(flightCoordinates);*/
+                        //dehighlight all highlighted flights
+                        $('#myFlights li:nth-child(n) button#name').removeClass('clickedClass');
+                        $('#externalFlights li:nth-child(n) button#name').removeClass('clickedClass');
+                        //highlight this flight
+                        if (flightDetails[i].is_external)
+                            $('#externalFlights li:nth-child(' + flightDetails[i].list_num + ') button#name').addClass('clickedClass');
+                        else
+                            $('#myFlights li:nth-child(' + flightDetails[i].list_num + ') button#name').addClass('clickedClass');
+                        //print details in bottom window
+                        $('#flightDetails').show();
+                        $('#flightDetails').text(JSON.stringify(flightDetails[i]));
+                    };
+                }(i));
+                //add plane to array
+                if (flightDetails[i].is_external)
+                    exPlanes.push(plane);
+                else
+                    myPlanes.push(plane);
+
+
+                //add listener to button
+                $(listName + ' li:nth-child(' + flightDetails[i].list_num + ') button#name').click(function (i, plane, listName, map) {
+                    return function () {
+                        //dehighlight all highlighted flight butttons
+                        $('#myFlights li:nth-child(n) button#name').removeClass('clickedClass');
+                        $('#externalFlights li:nth-child(n) button#name').removeClass('clickedClass');
+                        //highlight this button
+                        $(listName + ' li:nth-child(' + flightDetails[i].list_num + ') button#name').addClass('clickedClass');
+                        //change all other planes back to original color
+                        for (var j = 0; j < myPlanes.length; j++) {
+                            myPlanes[j].setIcon({
+                                url: 'http://www.clker.com/cliparts/0/b/2/A/H/W/airplane1-th.png',
+                                scaledSize: new google.maps.Size(20, 20)
+                            });
+                        }
+                        for (var j = 0; j < exPlanes.length; j++) {
+                            exPlanes[j].setIcon({
+                                url: 'http://www.clker.com/cliparts/A/d/N/8/j/g/blue-airplane-pass-th.png',
+                                scaledSize: new google.maps.Size(20, 20)
+                            });
+                        }
+                        //change clicked plane to red
+                        plane.setIcon({
+                            url: 'http://www.clker.com/cliparts/0/z/w/v/f/d/red-airplane-th.png',
+                            scaledSize: new google.maps.Size(20, 20)
+                        });
+                        //print details in bottom window
+                        $('#flightDetails').show();
+                        $('#flightDetails').text(JSON.stringify(flightDetails[i]));
+
+                        /*show path
+                        flightPath.setMap(map);
+                        var flightCoordinates = [];
+                        flightCoordinates.push({ lat: flightDetails[i].initial_location.latitude, lng: flightDetails[i].initial_location.longitude });
+                        for (j = 0; j < flightDetails[i].segments.length; j++)
+                            flightCoordinates.push({ lat: flightDetails[i].segments[j].latitude, lng: flightDetails[i].segments[j].longitude });
+                        flightPath.setPath(flightCoordinates);*/
+                    };
+                }(i, plane, listName, map));
+            }
+        }
+        function handleFileSelect(evt) {
+            //alert("insde");
+            var files = evt.target.files; // FileList object
+
+            // use the 1st file from the list
+            f = files[0];
+
+            var reader = new FileReader();
+            var all_text;
+            // Closure to capture the file information.
+            reader.onload = (function (theFile) {
+                return function (e) {
+
+                    //jQuery('#ms_word_filtered_html').val(e.target.result);
+                    all_text = e.target.result;
+                    alert(all_text);
+                    var obj = JSON.parse(all_text);
+                    var st = JSON.stringify(obj);
+                    // var json_to_send = JSON.parse(all_text);
+                    $.ajax({
+                        url: '/api/FlightPlan',
+                        type: 'POST',
+                        contentType: "application/json",
+                        success: function (data) {
+                            alert("success");
+                            //alert(data);
+                            //$('#target').html(data.msg);
+                        },
+                        data: st
+                    });
+
+                };
+            })(f);
+
+            // Read in the image file as a data URL.
+            reader.readAsText(f);
+            var input = document.getElementsByTagName('input')[0];
+
+            input.onclick = function () {
+                this.value = null;
+            };
+
+            input.onchange = function () {
+                //alert(this.value);
+            };
+            //console.log(all_text);
+            //alert(all_text);
+        }
+
+
+
+
+   
+        
+        async function getFlightPlan() {
+            let id = 1;
+            let getOptions = {
+                "method": "GET",
+                "headers": {
+                    'Content-Type': 'application/json'
+                    // 'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            }
+            let flight_plan = await fetch("/api/FlightPlan/" + id, getOptions);
+
+            let temp = await flight_plan.json();
+            console.log(temp);
+        }
+        async function deleteFlightById() {
+            let id = 1;
+            let getOptions = {
+                "method": "DELETE",
+                "headers": {
+                    'Content-Type': 'application/json'
+                    // 'Content-Type': 'application/x-www-form-urlencoded',
+                }
+            }
+            await fetch("/api/Flights/" + id, getOptions);
+
+            //let temp = await flight_plan.json();
+            //console.log(temp);
+        }
+        $(document).ready(function () {
+            document.getElementById('upload').addEventListener('change', handleFileSelect, false);
+            document.getElementById('fetch flights').addEventListener('click', initMap, false);
+            document.getElementById('fetch flight plan').addEventListener('click', getFlightPlan, false);
+            document.getElementById('delete flight').addEventListener('click', deleteFlightById, false);
+        });
+
+    </script>
+    <div class="container">
+        <div class="row">
+            <div class="w-75 p-3">
+                <!--upload Json button-->
+                <div class="jumbotron text-center">
+                    <div id="header"><h1 class="display-4"><strong>Flight Command</strong></h1></div>
+                    <hr>
+                    <div id="header"><strong>Time</strong></div>
+                    <div id="time"></div>
+                </div>
+            </div>
+            <div class="w-25 p-3">
+                <!--upload Json button-->
+                <div class="jumbotron text-center">
+                    <form>
+                        <div class="form-group">
+                            <div id="header">
+                                <strong>add a JSON file</strong>
+                                <hr>
+                            </div>
+                            <input type="file" class="form-control-file" id="upload" accept="json" name="files[]" size=30>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="w-75 p-3">
+                <div id="map"></div>
+            </div>
+            <div class="w-25 p-3">
+                <div class="jumbotron text-center">
+                    <div id="header"><strong>My Flights</strong><hr></div>
+                    <ol id="myFlights"></ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="w-75 p-3">
+                <div class="jumbotron text-center">
+                    <div id="header">
+                        <strong>Flight Details</strong>
+                        <hr>
+                        <output id="flightDetails"></output>
+                    </div>
+                </div>
+            </div>
+            <div class="w-25 p-3">
+                <div class="jumbotron text-center">
+                    <div id="header"><strong>External Flights</strong><hr></div>
+                    <ol id="externalFlights"></ol>
+                </div>
+            </div>
+        </div>
+    </div>
+    <input id="upload" type=file accept="json" name="files[]" size=30>
+</body>
+</html>
