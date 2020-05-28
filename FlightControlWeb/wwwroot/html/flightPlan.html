@@ -18,32 +18,27 @@
         ul {
             list-style: none;
         }
-
         ol {
             padding-left: 20px
         }
-
+        li {
+            margin: 5px 0;
+        }
         .clickedClass {
             color: black;
         }
     </style>
 </head>
 <body onload="startTime()">
-    <div><button id="fetch flights">Fetch Flights</button></div>
-    <div><button id="fetch flight plan">Fetch Plan</button></div>
-    <div><button id="delete flight">Delete Flight</button></div>
     <script type="text/javascript">
 
         //start clock time
         function startTime() {
-            var today = new Date();
-            var h = today.getHours();
-            var m = today.getMinutes();
-            var s = today.getSeconds();
-            m = checkTime(m);
-            s = checkTime(s);
-            document.getElementById('time').innerHTML =
-                h + ":" + m + ":" + s;
+            var now = new Date();
+            var hour = checkTime(now.getUTCHours());
+            var minute = checkTime(now.getUTCMinutes());
+            var second = checkTime(now.getUTCSeconds());
+            document.getElementById('time').innerHTML = hour + ":" + minute + ":" + second;
             setTimeout(startTime, 500);
         }
         function checkTime(i) {
@@ -75,6 +70,7 @@
                 strokeWeight: 2,
                 map: map
             });   
+
             fetchAndDisplay(map,true,flightPath);
         }
         
@@ -96,8 +92,7 @@
             $('#myFlights').empty();
             $('#externalFlights').empty();
 
-            //flight path line
-            flightPath.setMap(map);
+            
             
             //Array of flights
             flightDetails = [];
@@ -204,9 +199,9 @@
                         });
 
                         //delete old highlighted path
-                        flightPath.setPath(null);
+                        //flightPath.setPath(null);
                         //show flight path
-                        //flightPath.setMap(map);
+                        flightPath.setMap(map);
                         getFlightPlan(parseInt(flightDetails[i].flight_id)).then(data => {
                             var flightCoordinates = [];
                             //console.log(data);
@@ -234,7 +229,6 @@
                     exPlanes.push(plane);
                 else
                     myPlanes.push(plane);
-
 
                 //add listener to button
                 $(listName + ' li:nth-child(' + flightDetails[i].list_num + ') button#name').click(function (i, plane, listName, map) {
@@ -273,7 +267,7 @@
                         $('#flightDetails').text(JSON.stringify(flightDetails[i]));
 
                         //delete old highlighted path
-                        flightPath.setMap(null);
+                        //flightPath.setMap(null);
                         //show flight path
                         flightPath.setMap(map);
                         getFlightPlan(parseInt(flightDetails[i].flight_id)).then(data => {
@@ -286,12 +280,31 @@
                         });
                     };
                 }(i, plane, listName, map));
+
+
+                //add listener to delete button
+                $(listName + ' li:nth-child(' + flightDetails[i].list_num + ') button#delete').click(function (i, listName,plane) {
+                    return function () {
+                        if (clickedPlane.isClicked && flightDetails[i].flight_id == clickedPlane.id) {
+                            clickedPlane.isClicked = false;
+                            flightPath.setMap(null);
+                        }
+                        //delete from server
+                        deleteFlight(parseInt(flightDetails[i].flight_id));
+                        //delete button
+                        $(listName + ' li:nth-child(' + flightDetails[i].list_num + ')').remove();
+                        //delete plane
+                        plane.marker.setMap(null);
+
+                    }
+                }(i,listName,plane));
             }
 
             //if user clicks empty space
             map.addListener('click', function () {
                 //set clicked plane to unclicked
                 clickedPlane.isClicked = false;
+                clickedPlane.id = null;
                 
                 //change all other planes back to original color
                 for (var j = 0; j < myPlanes.length; j++) {
@@ -310,7 +323,7 @@
                 $('#myFlights li:nth-child(n) button').removeClass('clickedClass');
                 $('#externalFlights li:nth-child(n) button').removeClass('clickedClass');
                 $('#flightDetails').hide();
-                //flightPath.setMap(null);
+                flightPath.setMap(null);
 
             });
             setTimeout(function () {
@@ -318,7 +331,6 @@
             }, 5000);
         }
         function handleFileSelect(evt) {
-            //alert("insde");
             var files = evt.target.files; // FileList object
 
             // use the 1st file from the list
@@ -327,9 +339,8 @@
             var reader = new FileReader();
             var all_text;
             // Closure to capture the file information.
-            reader.onload = (function (theFile) {
+            reader.onload = (function () {
                 return function (e) {
-
                     //jQuery('#ms_word_filtered_html').val(e.target.result);
                     all_text = e.target.result;
                     alert(all_text);
@@ -340,14 +351,11 @@
                         url: '/api/FlightPlan',
                         type: 'POST',
                         contentType: "application/json",
-                        success: function (data) {
-                            alert("success");
-                            //alert(data);
-                            //$('#target').html(data.msg);
+                        success: function () {
+                            alert("successfully uploaded JSON");
                         },
                         data: st
                     });
-
                 };
             })(f);
 
@@ -377,8 +385,7 @@
             let flight_plan = await fetch("/api/FlightPlan/" + id, getOptions);
             return (await flight_plan.json());
         }
-        async function deleteFlightById() {
-            let id = 1;
+        async function deleteFlight(id) {
             let getOptions = {
                 "method": "DELETE",
                 "headers": {
@@ -387,31 +394,26 @@
                 }
             }
             await fetch("/api/Flights/" + id, getOptions);
-
-            //let temp = await flight_plan.json();
-            //console.log(temp);
         }
+        //upload JSON button
         $(document).ready(function () {
             document.getElementById('upload').addEventListener('change', handleFileSelect, false);
-            //document.getElementById('fetch flights').addEventListener('click', fetchAndDisplay, false);
-            document.getElementById('fetch flight plan').addEventListener('click', getFlightPlan, false);
-            document.getElementById('delete flight').addEventListener('click', deleteFlightById, false);
         });
 
     </script>
-    <div class="container">
+    <div class="container-fluid">
         <div class="row">
-            <div class="w-75 p-3">
-                <!--upload Json button-->
-                <div class="jumbotron text-center">
+            <div class="column w-75 p-2">
+                <!--Top Window-->
+                <div class="jumbotron text-center" >
                     <div id="header"><h1 class="display-4"><strong>Flight Command</strong></h1></div>
                     <hr>
-                    <div id="header"><strong>Time</strong></div>
+                    <div id="header"><strong>UTC Time</strong></div>
                     <div id="time"></div>
                 </div>
             </div>
-            <div class="w-25 p-3">
-                <!--upload Json button-->
+            <div class="column w-25 p-2">
+                <!--upload Json window-->
                 <div class="jumbotron text-center">
                     <form>
                         <div class="form-group">
@@ -426,11 +428,11 @@
             </div>
         </div>
         <div class="row">
-            <div class="w-75 p-3">
+            <div class="w-75 p-2">
                 <div id="map"></div>
             </div>
-            <div class="w-25 p-3">
-                <div class="jumbotron text-center">
+            <div class="w-25 p-2">
+                <div class="jumbotron text-center" >
                     <div id="header"><strong>My Flights</strong><hr></div>
                     <ol id="myFlights"></ol>
                 </div>
