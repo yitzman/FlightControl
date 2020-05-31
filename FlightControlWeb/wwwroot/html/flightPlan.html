@@ -73,7 +73,10 @@
 
             fetchAndDisplay(map,true,flightPath);
         }
-        
+        //links for icons
+        greenPlane = 'http://www.clker.com/cliparts/0/b/2/A/H/W/airplane1-th.png';
+        bluePlane = 'http://www.clker.com/cliparts/A/d/N/8/j/g/blue-airplane-pass-th.png';
+        redPlane = 'http://www.clker.com/cliparts/0/z/w/v/f/d/red-airplane-th.png';
 
         clickedPlane = {isClicked: false, id: 0,};
         //call server and display info
@@ -92,8 +95,8 @@
             $('#myFlights').empty();
             $('#externalFlights').empty();
 
-            
-            
+
+
             //Array of flights
             flightDetails = [];
             //get current time
@@ -107,7 +110,7 @@
                     // 'Content-Type': 'application/x-www-form-urlencoded',
                 }
             }
-            let flights_array = await fetch("/api/Flights?relative_to=" + currentTime, getOptions);
+            let flights_array = await fetch("/api/Flights?relative_to=" + currentTime + "&sync_all", getOptions);
             let flights = await flights_array.json();
             /*console.log(flights);
             console.log(flights[0].company_name)*/
@@ -123,10 +126,6 @@
                 newFlight.latitude = flights[i].latitude;
                 flightDetails.push(newFlight);
             }
-            //console.log(flightDetails[0].company_name);
-            //console.log(flightDetails[1].flight_id);
-            //console.log(flightDetails[1].company_name);*/
-
 
             //display on map
             //index of planes
@@ -140,19 +139,19 @@
                     var col = 'primary';
                     //check if plane is clicked
                     if (clickedPlane.isClicked && flightDetails[i].flight_id == clickedPlane.id)
-                        url = 'http://www.clker.com/cliparts/0/z/w/v/f/d/red-airplane-th.png';
+                        url = redPlane;
                     else
-                        url = 'http://www.clker.com/cliparts/A/d/N/8/j/g/blue-airplane-pass-th.png';
+                        url = bluePlane;
                 }
                 else {
                     flightDetails[i].list_num = myI;
                     myI++;
                     listName = '#myFlights';
-                    var col = 'success' 
+                    var col = 'success'
                     if (clickedPlane.isClicked && flightDetails[i].flight_id == clickedPlane.id)
-                        url = 'http://www.clker.com/cliparts/0/z/w/v/f/d/red-airplane-th.png';
+                        url = redPlane;
                     else
-                        url = 'http://www.clker.com/cliparts/0/b/2/A/H/W/airplane1-th.png';
+                        url = greenPlane;
                 }
                 $(listName).append('<li><button id=name type = "button" class="btn btn-'+col+'">' + flightDetails[i].flight_id + ': ' + flightDetails[i].company_name +
                     '</button> <button id=delete type="button" class="btn btn-danger"><i>X</i></button></li>');
@@ -182,19 +181,19 @@
                         //change all other planes back to original color
                         for (var j = 0; j < myPlanes.length; j++) {
                             myPlanes[j].marker.setIcon({
-                                url: 'http://www.clker.com/cliparts/0/b/2/A/H/W/airplane1-th.png',
+                                url: greenPlane,
                                 scaledSize: new google.maps.Size(20, 20)
                             });
                         }
                         for (var j = 0; j < exPlanes.length; j++) {
                             exPlanes[j].marker.setIcon({
-                                url: 'http://www.clker.com/cliparts/A/d/N/8/j/g/blue-airplane-pass-th.png',
+                                url: bluePlane,
                                 scaledSize: new google.maps.Size(20, 20)
                             });
                         }
                         //change clicked plane to red
                         this.setIcon({
-                            url: 'http://www.clker.com/cliparts/0/z/w/v/f/d/red-airplane-th.png',
+                            url: redPlane,
                             scaledSize: new google.maps.Size(20, 20)
                         });
 
@@ -247,19 +246,19 @@
                         //change all other planes back to original color
                         for (var j = 0; j < myPlanes.length; j++) {
                             myPlanes[j].marker.setIcon({
-                                url: 'http://www.clker.com/cliparts/0/b/2/A/H/W/airplane1-th.png',
+                                url: greenPlane,
                                 scaledSize: new google.maps.Size(20, 20)
                             });
                         }
                         for (var j = 0; j < exPlanes.length; j++) {
                             exPlanes[j].marker.setIcon({
-                                url: 'http://www.clker.com/cliparts/A/d/N/8/j/g/blue-airplane-pass-th.png',
+                                url: bluePlane,
                                 scaledSize: new google.maps.Size(20, 20)
                             });
                         }
                         //change clicked plane to red
                         plane.marker.setIcon({
-                            url: 'http://www.clker.com/cliparts/0/z/w/v/f/d/red-airplane-th.png',
+                            url: redPlane,
                             scaledSize: new google.maps.Size(20, 20)
                         });
                         //print details in bottom window
@@ -305,17 +304,17 @@
                 //set clicked plane to unclicked
                 clickedPlane.isClicked = false;
                 clickedPlane.id = null;
-                
+
                 //change all other planes back to original color
                 for (var j = 0; j < myPlanes.length; j++) {
                     myPlanes[j].marker.setIcon({
-                        url: 'http://www.clker.com/cliparts/0/b/2/A/H/W/airplane1-th.png',
+                        url: greenPlane,
                         scaledSize: new google.maps.Size(20, 20)
                     });
                 }
                 for (var j = 0; j < exPlanes.length; j++) {
                     exPlanes[j].marker.setIcon({
-                        url: 'http://www.clker.com/cliparts/A/d/N/8/j/g/blue-airplane-pass-th.png',
+                        url: bluePlane,
                         scaledSize: new google.maps.Size(20, 20)
                     });
                 }
@@ -361,7 +360,7 @@
 
             // Read in the image file as a data URL.
             reader.readAsText(f);
-            var input = document.getElementsByTagName('input')[0];
+            let input = document.getElementsByTagName('input')[0];
 
             input.onclick = function () {
                 this.value = null;
@@ -457,6 +456,5 @@
             </div>
         </div>
     </div>
-    <input id="upload" type=file accept="json" name="files[]" size=30>
 </body>
 </html>
