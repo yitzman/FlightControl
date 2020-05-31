@@ -8,6 +8,7 @@
     <Content Remove="wwwroot\html\blueplane.png" />
     <Content Remove="wwwroot\html\greenplane.png" />
     <Content Remove="wwwroot\html\redplane.png" />
+    <Content Remove="wwwroot\html\index.html" />
   </ItemGroup>
 
   <ItemGroup>
